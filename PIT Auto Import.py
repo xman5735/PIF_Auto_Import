@@ -1,74 +1,55 @@
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import filedialog
+from tkinter import messagebox, filedialog
 from tkcalendar import DateEntry
 import os
 import shutil
-import datetime
-import glob
-import openpyxl
-
-# Function to handle the file selection
-def select_file():
-    global pdf_file_path
-    pdf_file_path = filedialog.askopenfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
-    file_label.config(text="Selected File: " + os.path.basename(pdf_file_path))
-
-# Function to handle the submission
-def submit():
-    start_date = start_date_entry.get_date().strftime("%Y-%m-%d")
-    end_date = end_date_entry.get_date().strftime("%Y-%m-%d")
-    new_file_name = "ERC_" + start_date + "-" + end_date + ".pdf"
-    new_file_path = os.path.join(r"\\lcc-fsqb-01.lcc.local\Shares\Green Fox\QC\Logs\PIT_Scans", new_file_name)
-    print(new_file_path)
-    shutil.copy(pdf_file_path, new_file_path)
-    #update_excel_files(start_date, end_date, new_file_path)
-
-# Function to update Excel files
-def update_excel_files(start_date, end_date, new_file_path):
-    search_folder = r"\\lcc-fsqb-01.lcc.local\Shares\Green Fox\QC\Reports\\"
-    column_count = 0
-    for file_path in glob.glob(search_folder + "**/*.xlsx", recursive=True):
-        wb = openpyxl.load_workbook(file_path)
-        for sheet in wb.worksheets:
-            for row in sheet.iter_rows(min_row=2, max_row=2):
-                for cell in row:
-                    # Try to convert cell value to datetime object
-                    if cell.value:
-                        try:
-                            date_obj = datetime.datetime.strptime(cell.value, "%Y-%m-%d").date()
-                            date_value = date_obj
-                            print(date_obj)
-                        except ValueError as e:
-                            date_value = None
-                            print(f"Error: {e}")
-                    else:
-                        date_value = None
-                    # Check if date_value is within the specified range
-                    if date_value and start_date <= str(date_value) <= end_date:
-                    
-                        # Update the cell in row 32 of the same column
-                        sheet.cell(row=32, column=cell.column).value = new_file_path
-                        wb.save(file_path)
-                        column_count += 1
-                        break
-    # Show message box
-    message = f"{column_count} columns have been updated."
-    messagebox.showinfo("Success", message)
+from wand.image import Image
 
 # Create the GUI
 root = tk.Tk()
 root.title("PIT Auto Import")
 
-# PDF File Selection
-pdf_label = tk.Label(root, text="Select a PDF File:")
-pdf_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+# Initialize global variables
+tif_file_path = ""
+pdf_file_path = ""
 
-pdf_button = tk.Button(root, text="Browse", command=select_file)
-pdf_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+# Function to handle the file selection
+def select_file():
+    global tif_file_path
+    tif_file_path = filedialog.askopenfilename(defaultextension=".tif", filetypes=[("TIF Files", "*.tif")])
+    file_label.config(text=f"Selected File: {os.path.basename(tif_file_path)}")
+
+# Function to convert TIF to PDF
+def convert_to_pdf():
+    global pdf_file_path
+    pdf_file_path = os.path.splitext(tif_file_path)[0] + ".pdf"
+    with Image(filename=tif_file_path) as img:
+        img.save(filename=pdf_file_path)
+    file_label.config(text=f"Converted File: {os.path.basename(pdf_file_path)}")
+
+# Function to handle the submission
+def submit():
+    convert_to_pdf()
+    start_date = start_date_entry.get_date().strftime("%Y-%m-%d")
+    end_date = end_date_entry.get_date().strftime("%Y-%m-%d")
+    new_file_name = f"ERC_{start_date}-{end_date}.pdf"
+    new_file_path = os.path.join(r"\\lcc-fsqb-01.lcc.local\Shares\Green Fox\QC\Logs\PIT_Scans", new_file_name)
+    shutil.copy(pdf_file_path, new_file_path)
+    messagebox.showinfo("Success", "File copied successfully.")
+    #update_excel_files(start_date, end_date, new_file_path)
+
+# TIF File Selection
+tif_label = tk.Label(root, text="Select a TIF File:")
+tif_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+
+tif_button = tk.Button(root, text="Browse", command=select_file)
+tif_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+
+#convert_button = tk.Button(root, text="Convert to PDF", command=convert_to_pdf)
+#convert_button.grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
 
 file_label = tk.Label(root, text="Selected File: None")
-file_label.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky=tk.W)
+file_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky=tk.W)
 
 # Date Entries
 start_date_label = tk.Label(root, text="Start Date:")
