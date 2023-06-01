@@ -33,7 +33,32 @@ def submit():
     start_date = start_date_entry.get_date().strftime("%Y-%m-%d")
     end_date = end_date_entry.get_date().strftime("%Y-%m-%d")
     new_file_name = f"PIT_{start_date}-{end_date}.pdf"
-    new_file_path = os.path.join(r"\\lcc-fsqb-01.lcc.local\Shares\Green Fox\QC\Logs\PIT_Scans", new_file_name)
+
+    #new_file_path = os.path.join(r"\\lcc-fsqb-01.lcc.local\Shares\Green Fox\QC\Logs\PIT_Scans", new_file_name)
+    # Set the path to the directory containing the Excel files
+    dir_path = r"C:\Users\alex\Desktop\Files\Local Shared Folder\QC_QC_QC\Logs\PIT_Scans"
+
+    # Check if the directory exists, or try two other network locations if not
+    if os.path.isdir(dir_path):
+        new_file_path = os.path.join(dir_path, new_file_name)
+        print(dir_path)
+    else:
+        network_path_1 = r"S:\Green Fox\QC_QC_QC\Logs\PIT_Scans"
+        network_path_2 = r"Z:\QC_QC_QC\Logs\PIT_Scans"
+        
+        if os.path.isdir(network_path_1):
+            dir_path = network_path_1
+            new_file_path = os.path.join(dir_path, new_file_name)
+            print(dir_path)
+        elif os.path.isdir(network_path_2):
+            dir_path = network_path_2
+            new_file_path = os.path.join(dir_path, new_file_name)
+            print(dir_path)
+        else:
+            print("Directory not found in any of the specified locations.")
+
+
+
     shutil.copy(pdf_file_path, new_file_path)
     messagebox.showinfo("Success", "File copied successfully.")
     #update_excel_files(start_date, end_date, new_file_path)
