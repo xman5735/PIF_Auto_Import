@@ -32,7 +32,7 @@ def submit():
     convert_to_pdf()
     start_date = start_date_entry.get_date().strftime("%Y-%m-%d")
     end_date = end_date_entry.get_date().strftime("%Y-%m-%d")
-    new_file_name = f"ERC_{start_date}-{end_date}.pdf"
+    new_file_name = f"PIT_{start_date}-{end_date}.pdf"
     new_file_path = os.path.join(r"\\lcc-fsqb-01.lcc.local\Shares\Green Fox\QC\Logs\PIT_Scans", new_file_name)
     shutil.copy(pdf_file_path, new_file_path)
     messagebox.showinfo("Success", "File copied successfully.")
